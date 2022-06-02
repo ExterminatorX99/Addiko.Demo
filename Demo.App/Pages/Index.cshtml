@@ -9,13 +9,13 @@
         <div class="row mb-3">
             <label for="imePrezime" class="col-sm-2 col-form-label">Ime i prezime</label>
             <div class="col-sm-10 w-50">
-                <input id="imePrezime" class="form-control" name="ImePrezime" required/>
+                <input id="imePrezime" class="form-control" name="imePrezime" required/>
             </div>
         </div>
         <div class="row mb-3">
             <label for="brojMobitela" class="col-sm-2 col-form-label">Broj mobitela</label>
             <div class="col-sm-10 w-50">
-                <input id="brojMobitela" class="form-control" name="BrojMobitela" pattern="[0-9]+" required/>
+                <input id="brojMobitela" class="form-control" name="brojMobitela" pattern="[0-9]+" required/>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Dodaj primatelja</button>
@@ -23,7 +23,7 @@
 </div>
 <br/>
 <div>
-    <form id="porukaForm" method="post">
+    <form id="porukaForm" method="post" onsubmit="posaljiPoruku(event)">
         <fieldset>
             <table class="table table-bordered">
                 <thead>
@@ -40,21 +40,25 @@
 
         <div>
             <label for="imePrezime" class="form-label">SMS Poruka (max 160 znakova, preostalo <span id="preostaloZnakova">160</span> znakova)</label><br/>
-            <textarea oninput="updatePreostaloZnakova()" id="Poruka" name="Poruka" required></textarea>
+            <textarea oninput="updatePreostaloZnakova()" id="poruka" name="poruka" required></textarea>
         </div>
         <button type="submit" class="btn btn-primary">Pošalji</button>
     </form>
+    <div>
+        <p id="success" hidden>Poruka uspješno poslana</p>
+    </div>
 </div>
 
 @section Scripts
 {
     <script>
-        $("#primateljiTable").ready(function() {
-            const getUrl = "https://localhost:7064/api/Primatelji";
+        const primateljiUrl = "https://localhost:7064/api/Primatelji";
+        const porukeUrl = "https://localhost:7064/api/Poruke";
 
+        $("#primateljiTable").ready(function() {
             $.ajax({
                 type: "GET",
-                url: getUrl,
+                url: primateljiUrl,
                 success: function(data, textStatus, jqXHR) {
                     const primateljiTable = $("#primateljiTable")[0];
 
@@ -66,24 +70,49 @@
         function dodajPrimatelja(event) {
             event.preventDefault();
 
-            const postUrl = "https://localhost:7064/api/Primatelji";
-            const form = $("#primateljiForm");
-            const imePrezime = form.find("#imePrezime")[0];
-            const brojMobitela = form.find("#brojMobitela")[0];
+            const form = $("#primateljiForm")[0];
+            const formData = new FormData(form);
 
             const data = {
-                "imePrezime": imePrezime.value,
-                "brojMobitela": brojMobitela.value
+                "imePrezime": formData.get("imePrezime"),
+                "brojMobitela": formData.get("brojMobitela")
             };
 
             $.ajax({
                 type: "POST",
-                url: postUrl,
+                url: primateljiUrl,
                 data: JSON.stringify(data),
                 success: function(data, textStatus, jqXHR) {
                     const primateljiTable = $("#primateljiTable")[0];
-
                     addPrimateljToTable(primateljiTable, data);
+
+                    const success = $("#success")[0];
+                    success.hidden = true;
+                },
+                contentType: "application/json"
+            });
+
+            return false;
+        }
+
+        function posaljiPoruku(event) {
+            event.preventDefault();
+
+            const form = $("#porukaForm")[0];
+            const formData = new FormData(form);
+
+            const data = {
+                "primatelji": formData.getAll("id"),
+                "poruka": formData.get("poruka")
+            };
+
+            $.ajax({
+                type: "POST",
+                url: porukeUrl,
+                data: JSON.stringify(data),
+                success: function(data, textStatus, jqXHR) {
+                    const success = $("#success")[0];
+                    success.hidden = false;
                 },
                 contentType: "application/json"
             });
