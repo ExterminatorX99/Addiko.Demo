@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Demo.Api.Model;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Demo.DB;
 using Demo.Model;
@@ -79,17 +80,47 @@ namespace Demo.Api.Controllers
 		// POST: api/Poruke
 		// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 		[HttpPost]
-		public async Task<ActionResult<Poruka>> PostPoruka(Poruka poruka)
+		public async Task<ActionResult<Poruka>> PostPoruka(PorukaPostModel model)
 		{
 			if (_context.Poruke == null)
 			{
 				return Problem("Entity set 'AppDbContext.Poruke'  is null.");
 			}
+			if (_context.Primatelji == null)
+			{
+				return Problem("Entity set 'AppDbContext.Primatelji'  is null.");
+			}
 
-			_context.Poruke.Add(poruka);
+			const string sms = "sms";
+
+			Directory.CreateDirectory(sms);
+
+			foreach (Guid id in model.Primatelji)
+			{
+				var primatelj = await _context.Primatelji.FindAsync(id);
+				if (primatelj == null)
+				{
+					continue;
+				}
+
+				var fileName = $"demo_{primatelj.BrojMobitela}.txt";
+				var path = Path.Combine(sms, fileName);
+
+				await System.IO.File.WriteAllTextAsync(path, model.Poruka);
+
+				Poruka poruka = new()
+				{
+					Primatelj = primatelj,
+					DatumVrijemeSlanja = DateTime.UtcNow,
+					LokacijaPoruke = path
+				};
+
+				_context.Poruke.Add(poruka);
+			}
+
 			await _context.SaveChangesAsync();
 
-			return CreatedAtAction("GetPoruka", new { id = poruka.Id }, poruka);
+			return Created("", model);
 		}
 
 		// DELETE: api/Poruke/5
