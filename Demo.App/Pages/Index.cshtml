@@ -4,7 +4,116 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div>
+    <form id="primateljiForm" onsubmit="return dodajPrimatelja(event);" method="post">
+        <div class="row mb-3">
+            <label for="imePrezime" class="col-sm-2 col-form-label">Ime i prezime</label>
+            <div class="col-sm-10 w-50">
+                <input id="imePrezime" class="form-control" name="ImePrezime" required/>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <label for="brojMobitela" class="col-sm-2 col-form-label">Broj mobitela</label>
+            <div class="col-sm-10 w-50">
+                <input id="brojMobitela" class="form-control" name="BrojMobitela" pattern="[0-9]+" required/>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Dodaj primatelja</button>
+    </form>
 </div>
+<br/>
+<div>
+    <form id="porukaForm" method="post">
+        <fieldset>
+            <table class="table table-bordered">
+                <thead>
+                <tr class="table-secondary">
+                    <th scope="col">Poslati</th>
+                    <th scope="col">Ime i prezime</th>
+                    <th scope="col">Broj mobitela</th>
+                </tr>
+                </thead>
+                <tbody id="primateljiTable">
+                </tbody>
+            </table>
+        </fieldset>
+
+        <div>
+            <label for="imePrezime" class="form-label">SMS Poruka (max 160 znakova, preostalo <span id="preostaloZnakova">160</span> znakova)</label><br/>
+            <textarea oninput="updatePreostaloZnakova()" id="Poruka" name="Poruka" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Pošalji</button>
+    </form>
+</div>
+
+@section Scripts
+{
+    <script>
+        $("#primateljiTable").ready(function() {
+            const getUrl = "https://localhost:7064/api/Primatelji";
+
+            $.ajax({
+                type: "GET",
+                url: getUrl,
+                success: function(data, textStatus, jqXHR) {
+                    const primateljiTable = $("#primateljiTable")[0];
+
+                    data.forEach(p => addPrimateljToTable(primateljiTable, p));
+                }
+            });
+        });
+
+        function dodajPrimatelja(event) {
+            event.preventDefault();
+
+            const postUrl = "https://localhost:7064/api/Primatelji";
+            const form = $("#primateljiForm");
+            const imePrezime = form.find("#imePrezime")[0];
+            const brojMobitela = form.find("#brojMobitela")[0];
+
+            const data = {
+                "imePrezime": imePrezime.value,
+                "brojMobitela": brojMobitela.value
+            };
+
+            $.ajax({
+                type: "POST",
+                url: postUrl,
+                data: JSON.stringify(data),
+                success: function(data, textStatus, jqXHR) {
+                    const primateljiTable = $("#primateljiTable")[0];
+
+                    addPrimateljToTable(primateljiTable, data);
+                },
+                contentType: "application/json"
+            });
+
+            return false;
+        }
+
+        function updatePreostaloZnakova() {
+            const span = $("#preostaloZnakova")[0];
+            const poruka = $("#Poruka")[0];
+
+            span.innerText = 160 - poruka.value.length;
+        }
+
+        function addPrimateljToTable(table, primatelj) {
+            const row = table.insertRow();
+
+            const checkboxColumn = row.insertCell();
+            const imePrezimeColumn = row.insertCell();
+            const brojMobitelaColumn = row.insertCell();
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.name = "id";
+            checkbox.value = primatelj.id;
+
+            checkboxColumn.appendChild(checkbox);
+            imePrezimeColumn.innerText = primatelj.imePrezime;
+            brojMobitelaColumn.innerText = primatelj.brojMobitela;
+
+        }
+    </script>
+}

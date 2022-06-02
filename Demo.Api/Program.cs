@@ -19,6 +19,8 @@ namespace Demo.Api
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
+			builder.Services.AddCors();
+
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
@@ -33,6 +35,12 @@ namespace Demo.Api
 			app.UseAuthorization();
 
 			app.MapControllers();
+
+			app.UseCors(policy => policy
+				.AllowAnyMethod()
+				.AllowAnyHeader()
+				.SetIsOriginAllowed(origin => true) // allow any origin
+				.AllowCredentials());               // allow credentials
 
 			app.Run();
 		}
