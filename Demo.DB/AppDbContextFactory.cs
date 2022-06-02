@@ -10,7 +10,8 @@ namespace Demo.DB
 		public AppDbContext CreateDbContext(string[] args)
 		{
 			var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-			optionsBuilder.UseSqlServer();
+			optionsBuilder.UseSqlServer(ConnectionString,
+				b => b.MigrationsAssembly("Demo.DB"));
 
 			return new AppDbContext(optionsBuilder.Options);
 		}
