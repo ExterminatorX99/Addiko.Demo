@@ -5,9 +5,9 @@ namespace Demo.DB;
 
 public class AppDbContext : DbContext
 {
-	public DbSet<Primatelj> Primatelji { get; set; } = default!;
+	public DbSet<Primatelj>? Primatelji { get; set; }
 
-	public DbSet<Poruka> Poruke { get; set; } = default!;
+	public DbSet<Poruka>? Poruke { get; set; }
 
 	public AppDbContext(DbContextOptions<AppDbContext> options)
 		: base(options)
